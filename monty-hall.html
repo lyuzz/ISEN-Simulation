@@ -118,36 +118,34 @@ header .sub {
   text-transform: uppercase;
 }
 
-/* 3-D door scene */
+/* door scene */
 .door-scene {
   width: 118px;
   height: 196px;
-  perspective: 700px;
   cursor: default;
   position: relative;
 }
 .door-scene.pickable { cursor: pointer; }
-.door-scene.pickable:hover .door-card {
-  transform: rotateY(-12deg);
+.door-scene.pickable:hover .door-front {
   filter: brightness(1.15);
+  transform: translateY(-2px);
 }
 
 .door-card {
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  transform-origin: left center;
-  transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1),
-              filter 0.2s;
   position: relative;
 }
 
-/* open states */
-.door-scene.host-open .door-card {
-  transform: rotateY(-138deg);
+/* open states — fade front out, back in */
+.door-scene.host-open .door-front,
+.door-scene.full-open .door-front {
+  opacity: 0;
+  pointer-events: none;
 }
-.door-scene.full-open .door-card {
-  transform: rotateY(-148deg);
+.door-scene.host-open .door-back,
+.door-scene.full-open .door-back {
+  opacity: 1;
 }
 
 /* door faces */
@@ -155,15 +153,16 @@ header .sub {
   position: absolute;
   inset: 0;
   border-radius: 6px 6px 2px 2px;
-  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.65s ease, filter 0.2s, transform 0.2s;
 }
 
 /* FRONT face */
 .door-front {
+  opacity: 1;
   background: linear-gradient(160deg, #b07830 0%, #7a4a20 55%, #4d2e0e 100%);
   border: 3px solid #3d2008;
   box-shadow:
@@ -218,7 +217,7 @@ header .sub {
 
 /* BACK face (prize reveal) */
 .door-back {
-  transform: rotateY(180deg);
+  opacity: 0;
   background: #0b1826;
   border: 1px solid rgba(255,255,255,0.1);
   gap: 8px;
