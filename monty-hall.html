@@ -346,6 +346,112 @@ header .sub {
 }
 .theory-box strong { color: var(--gold); }
 
+/* ── Join modal ──────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+.modal-box {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 34px 28px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+.modal-box h2 {
+  font-size: 1.5em;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.modal-box p { color: var(--muted); font-size: 0.9em; margin-bottom: 20px; line-height: 1.5; }
+.modal-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  color: #dde9f3;
+  font-size: 1em;
+  margin-bottom: 16px;
+  outline: none;
+}
+.modal-input:focus { border-color: rgba(248,213,104,0.5); }
+.btn-join {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #c47d15, #8a5500);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+.btn-join:hover { filter: brightness(1.15); }
+
+/* ── Connection status ───────────────────────── */
+.header-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 0.82em;
+}
+#wsStatus  { font-weight: 600; transition: color 0.3s; }
+#myNameTag { color: var(--gold); font-weight: 700; }
+
+/* ── Leaderboard ─────────────────────────────── */
+.lb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.lb-header h3 { margin-bottom: 0; }
+#onlineCount  { font-size: 0.78em; color: var(--green); font-weight: 700; }
+.lb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 210px;
+  overflow-y: auto;
+}
+.lb-list::-webkit-scrollbar { width: 3px; }
+.lb-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.lb-row {
+  display: grid;
+  grid-template-columns: 22px 1fr 36px 42px;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 0.79em;
+  background: rgba(255,255,255,0.025);
+}
+.lb-row.lb-me {
+  background: rgba(248,213,104,0.08);
+  border: 1px solid rgba(248,213,104,0.22);
+}
+.lb-rank  { color: var(--muted); font-weight: 700; text-align: center; }
+.lb-name  { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-total { color: var(--muted); font-size: 0.88em; text-align: right; }
+.lb-sw    { color: var(--blue); font-weight: 700; text-align: right; }
+.lb-empty { font-size: 0.82em; color: var(--muted); text-align: center; padding: 10px; }
+
 /* history */
 .history-list {
   display: flex;
@@ -380,6 +486,10 @@ header .sub {
   <header>
     <h1>Monty Hall Problem</h1>
     <p class="sub">Monty Hall Problem &nbsp;·&nbsp; Simulation Demo</p>
+    <div class="header-meta">
+      <span id="wsStatus" style="color:var(--muted)">● Connecting…</span>
+      <span id="myNameTag"></span>
+    </div>
   </header>
 
   <div class="layout">
@@ -519,9 +629,32 @@ header .sub {
         </div>
       </div>
 
+      <!-- live leaderboard -->
+      <div class="card">
+        <div class="lb-header">
+          <h3>Live Leaderboard</h3>
+          <span id="onlineCount">0 online</span>
+        </div>
+        <div class="lb-list" id="lbList">
+          <div class="lb-empty">Connecting…</div>
+        </div>
+      </div>
+
     </div><!-- /stats-col -->
   </div><!-- /layout -->
 </div><!-- /page -->
+
+<!-- Join modal -->
+<div class="modal-overlay" id="joinModal">
+  <div class="modal-box">
+    <h2>Join the Game</h2>
+    <p>Enter your name to appear on the live leaderboard and compete with your classmates!</p>
+    <input class="modal-input" id="playerNameInput" type="text"
+           placeholder="Your name (e.g. Alice)" maxlength="24"
+           onkeydown="if(event.key==='Enter') joinGame()" />
+    <button class="btn-join" onclick="joinGame()">Start Playing</button>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -591,12 +724,16 @@ function decide(doSwitch) {
   renderGame();
   updateStats();
   drawChart();
+
+  // Notify multiplayer server
+  wsSend({ type: 'game_result', switched: doSwitch, won: S.won });
 }
 
 function resetAll() {
   S.switchWins = S.switchTotal = S.stayWins = S.stayTotal = 0;
   S.history    = [];
   S.chartData  = [];
+  wsSend({ type: 'sync', switchWins: 0, switchTotal: 0, stayWins: 0, stayTotal: 0 });
   updateStats();
   drawChart();
   newGame();
@@ -625,6 +762,15 @@ function autoPlay(n) {
 
   updateStats();
   drawChart();
+
+  // Sync cumulative stats to server after bulk auto-play
+  wsSend({
+    type: 'sync',
+    switchWins:  S.switchWins,
+    switchTotal: S.switchTotal,
+    stayWins:    S.stayWins,
+    stayTotal:   S.stayTotal,
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -891,6 +1037,101 @@ function drawChart() {
   ctx.fillRect(W - 90, PAD.top + 14, 14, 2);
   ctx.fillText('Stay', W - 72, PAD.top + 19);
 }
+
+// ═══════════════════════════════════════════════
+//  Multiplayer — WebSocket client
+// ═══════════════════════════════════════════════
+let ws = null;
+let myPlayerId = null;
+let myPlayerName = '';
+
+function wsSend(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+}
+
+function setWsStatus(connected) {
+  const el = document.getElementById('wsStatus');
+  if (connected) {
+    el.textContent = '● Online';
+    el.style.color = '#81c784';
+  } else {
+    el.textContent = '● Offline';
+    el.style.color = '#e57373';
+  }
+}
+
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+
+  ws.onopen = () => {
+    setWsStatus(true);
+    if (myPlayerName) wsSend({ type: 'join', name: myPlayerName });
+  };
+
+  ws.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    if (msg.type === 'welcome')     { myPlayerId = msg.playerId; }
+    if (msg.type === 'player_list') { renderLeaderboard(msg.players); }
+  };
+
+  ws.onclose = () => {
+    setWsStatus(false);
+    setTimeout(connectWS, 3000); // auto-reconnect
+  };
+
+  ws.onerror = () => { setWsStatus(false); };
+}
+
+function joinGame() {
+  const input = document.getElementById('playerNameInput');
+  myPlayerName = input.value.trim() || 'Anonymous';
+  document.getElementById('joinModal').style.display = 'none';
+  document.getElementById('myNameTag').textContent = myPlayerName;
+  wsSend({ type: 'join', name: myPlayerName });
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function renderLeaderboard(players) {
+  const count = document.getElementById('onlineCount');
+  const list  = document.getElementById('lbList');
+  count.textContent = `${players.length} online`;
+
+  if (players.length === 0) {
+    list.innerHTML = '<div class="lb-empty">No players connected</div>';
+    return;
+  }
+
+  list.innerHTML = players.map((p, idx) => {
+    const total = p.switchTotal + p.stayTotal;
+    const swPct = p.switchTotal > 0
+      ? (p.switchWins / p.switchTotal * 100).toFixed(1) + '%'
+      : '—';
+    const isMe = p.id === myPlayerId;
+    return `
+      <div class="lb-row${isMe ? ' lb-me' : ''}">
+        <span class="lb-rank">${idx + 1}</span>
+        <span class="lb-name">${escHtml(p.name)}${isMe ? ' ★' : ''}</span>
+        <span class="lb-total">${total}G</span>
+        <span class="lb-sw" title="Switch win rate">${swPct}</span>
+      </div>`;
+  }).join('');
+}
+
+// Kick off connection immediately — modal is shown to human, WS connects in bg
+connectWS();
+
+// Focus the name input when modal is shown
+document.getElementById('playerNameInput').focus();
 
 // ═══════════════════════════════════════════════
 //  Door click delegation
