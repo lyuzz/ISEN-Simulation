@@ -492,6 +492,14 @@ header .sub {
   font-size: 0.95em;
 }
 .lb-empty { font-size: 0.82em; color: var(--muted); text-align: center; padding: 10px; }
+.lb-summary {
+  background: rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.12);
+  margin-top: 2px;
+  border-radius: 6px;
+}
+.lb-summary .lb-rank { color: var(--muted); }
+.lb-summary .lb-name { color: var(--muted); font-style: italic; }
 
 /* history */
 .history-list {
@@ -1156,7 +1164,8 @@ function renderLeaderboard(players) {
     return;
   }
 
-  list.innerHTML = players.map((p, idx) => {
+  // Per-player rows
+  const rows = players.map((p, idx) => {
     const total = p.switchTotal + p.stayTotal;
     const totalWins = p.switchWins + p.stayWins;
     const totalPct = total > 0
@@ -1190,6 +1199,40 @@ function renderLeaderboard(players) {
         </div>
       </div>`;
   }).join('');
+
+  // Aggregate summary row
+  const allSwitchWins  = players.reduce((s, p) => s + p.switchWins,  0);
+  const allSwitchTotal = players.reduce((s, p) => s + p.switchTotal, 0);
+  const allStayWins    = players.reduce((s, p) => s + p.stayWins,    0);
+  const allStayTotal   = players.reduce((s, p) => s + p.stayTotal,   0);
+  const allTotal       = allSwitchTotal + allStayTotal;
+  const allWins        = allSwitchWins  + allStayWins;
+  const allTotalPct  = allTotal       > 0 ? (allWins        / allTotal       * 100).toFixed(1) + '%' : '—';
+  const allSwPct     = allSwitchTotal > 0 ? (allSwitchWins  / allSwitchTotal * 100).toFixed(1) + '%' : '—';
+  const allStayPct   = allStayTotal   > 0 ? (allStayWins    / allStayTotal   * 100).toFixed(1) + '%' : '—';
+
+  const summaryRow = `
+    <div class="lb-row lb-summary">
+      <span class="lb-rank">—</span>
+      <span class="lb-name">All Players</span>
+      <div class="lb-stat-group">
+        <span class="lb-stat-label">Total</span>
+        <span class="lb-stat-count">${allTotal}</span>
+        <span class="lb-stat-pct" style="color:var(--blue)">${allTotalPct}</span>
+      </div>
+      <div class="lb-stat-group">
+        <span class="lb-stat-label">Switch Avg</span>
+        <span class="lb-stat-count">${allSwitchTotal}</span>
+        <span class="lb-stat-pct" style="color:var(--green)">${allSwPct}</span>
+      </div>
+      <div class="lb-stat-group">
+        <span class="lb-stat-label">Stay Avg</span>
+        <span class="lb-stat-count">${allStayTotal}</span>
+        <span class="lb-stat-pct" style="color:var(--orange)">${allStayPct}</span>
+      </div>
+    </div>`;
+
+  list.innerHTML = rows + summaryRow;
 }
 
 // Kick off connection immediately — modal is shown to human, WS connects in bg
