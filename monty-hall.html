@@ -295,23 +295,6 @@ header .sub {
 .bar-stay    { background: linear-gradient(90deg, var(--orange), #ffe082); }
 .theory-note { font-size: 0.72em; color: rgba(255,255,255,0.28); margin-top: 4px; }
 
-/* auto-play */
-.auto-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.btn-auto {
-  flex: 1;
-  min-width: 55px;
-  padding: 8px 6px;
-  font-size: 0.82em;
-  font-weight: 700;
-  border: 1px solid rgba(156,39,176,0.45);
-  border-radius: 6px;
-  background: rgba(156,39,176,0.18);
-  color: #ce93d8;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-.btn-auto:hover { background: rgba(156,39,176,0.4); transform: translateY(-1px); }
-.auto-note { font-size: 0.75em; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
 .btn-reset {
   width: 100%;
   padding: 9px;
@@ -659,34 +642,11 @@ header .sub {
         </div>
       </div>
 
-      <!-- auto play -->
-      <div class="card">
-        <h3>Auto Simulation</h3>
-        <div class="auto-btns">
-          <button class="btn-auto" onclick="autoPlay(10)">× 10</button>
-          <button class="btn-auto" onclick="autoPlay(100)">× 100</button>
-          <button class="btn-auto" onclick="autoPlay(1000)">× 1000</button>
-          <button class="btn-auto" onclick="autoPlay(10000)">× 10000</button>
-        </div>
-        <p class="auto-note">In auto mode, switch / stay are 50/50,<br>for fast observation of probability convergence.</p>
-        <button class="btn-reset" onclick="resetAll()">Reset All Data</button>
-      </div>
-
       <!-- convergence chart -->
       <div class="card">
         <h3>Probability Convergence</h3>
         <canvas id="chartCanvas" height="158"></canvas>
-      </div>
-
-      <!-- theory -->
-      <div class="theory-box">
-        <strong>Why does switching win 2/3 of the time?</strong><br>
-        Initial probability of picking the car = 1/3<br>
-        Initial probability of picking an empty door = 2/3<br>
-        After the host reveals an empty door:<br>
-        If you initially picked empty (prob. 2/3), switching wins ✓<br>
-        If you initially picked the car (prob. 1/3), switching loses ✗<br>
-        ∴ <strong>Switch win rate = 2/3, Stay win rate = 1/3</strong>
+        <button class="btn-reset" onclick="resetAll()" style="margin-top:10px">Reset All Data</button>
       </div>
 
       <!-- history -->
@@ -1200,18 +1160,18 @@ function renderLeaderboard(players) {
         <span class="lb-rank">${idx + 1}</span>
         <span class="lb-name">${escHtml(p.name)}${isMe ? ' ★' : ''}</span>
         <div class="lb-stat-group">
-          <span class="lb-stat-label">总局数</span>
-          <span class="lb-stat-count">${total}G</span>
+          <span class="lb-stat-label">Total</span>
+          <span class="lb-stat-count">${total}</span>
           <span class="lb-stat-pct" style="color:var(--blue)">${totalPct}</span>
         </div>
         <div class="lb-stat-group">
           <span class="lb-stat-label">Switch</span>
-          <span class="lb-stat-count">${p.switchTotal}G</span>
+          <span class="lb-stat-count">${p.switchTotal}</span>
           <span class="lb-stat-pct" style="color:var(--green)">${swPct}</span>
         </div>
         <div class="lb-stat-group">
           <span class="lb-stat-label">Stay</span>
-          <span class="lb-stat-count">${p.stayTotal}G</span>
+          <span class="lb-stat-count">${p.stayTotal}</span>
           <span class="lb-stat-pct" style="color:var(--orange)">${stayPct}</span>
         </div>
       </div>`;
