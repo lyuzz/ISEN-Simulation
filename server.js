@@ -35,9 +35,13 @@ function getPlayerList() {
       stayWins:    p.stayWins,
       stayTotal:   p.stayTotal,
     }))
-    .sort((a, b) =>
-      (b.switchTotal + b.stayTotal) - (a.switchTotal + a.stayTotal)
-    );
+    .sort((a, b) => {
+      const aTotal = a.switchTotal + a.stayTotal;
+      const bTotal = b.switchTotal + b.stayTotal;
+      const aRate = aTotal > 0 ? (a.switchWins + a.stayWins) / aTotal : -1;
+      const bRate = bTotal > 0 ? (b.switchWins + b.stayWins) / bTotal : -1;
+      return bRate - aRate;
+    });
 }
 
 // ── WebSocket handler ───────────────────────────────────────────────────────
