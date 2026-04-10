@@ -1,8 +1,14 @@
 services:
   monty-hall:
     build: .
+    container_name: monty-hall
     ports:
       - "3000:3000"
     restart: unless-stopped
     environment:
       - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
