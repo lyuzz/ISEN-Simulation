@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三门问题 · Monty Hall Problem</title>
+<style>
+:root {
+  --gold:        #f8d568;
+  --gold-dark:   #c47d15;
+  --blue:        #64b5f6;
+  --orange:      #ffb74d;
+  --green:       #81c784;
+  --red:         #e57373;
+  --bg0:         #0d1b2a;
+  --bg1:         #162232;
+  --bg2:         #1e3352;
+  --muted:       #7fa8c9;
+  --card-border: rgba(255,255,255,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(150deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+  min-height: 100vh;
+  color: #dde9f3;
+}
+
+/* ── Page shell ────────────────────────────────── */
+.page { max-width: 1060px; margin: 0 auto; padding: 20px 16px 40px; }
+
+header {
+  text-align: center;
+  padding: 28px 0 22px;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 28px;
+}
+header h1 {
+  font-size: 2.3em;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+}
+header .sub {
+  color: var(--muted);
+  font-size: 0.95em;
+  margin-top: 6px;
+}
+
+/* ── Layout ────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 310px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 780px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* ── Card base ─────────────────────────────────── */
+.card {
+  background: rgba(255,255,255,0.045);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 22px;
+}
+.card h3 {
+  font-size: 0.76em;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* ── Status message ────────────────────────────── */
+#statusMsg {
+  text-align: center;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(248,213,104,0.07);
+  border: 1px solid rgba(248,213,104,0.18);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 28px;
+  line-height: 1.4;
+}
+
+/* ── Doors area ────────────────────────────────── */
+.doors-area {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.door-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.door-lbl {
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* 3-D door scene */
+.door-scene {
+  width: 118px;
+  height: 196px;
+  perspective: 700px;
+  cursor: default;
+  position: relative;
+}
+.door-scene.pickable { cursor: pointer; }
+.door-scene.pickable:hover .door-card {
+  transform: rotateY(-12deg);
+  filter: brightness(1.15);
+}
+
+.door-card {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.2s;
+  position: relative;
+}
+
+/* open states */
+.door-scene.host-open .door-card {
+  transform: rotateY(-138deg);
+}
+.door-scene.full-open .door-card {
+  transform: rotateY(-148deg);
+}
+
+/* door faces */
+.door-front, .door-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px 6px 2px 2px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* FRONT face */
+.door-front {
+  background: linear-gradient(160deg, #b07830 0%, #7a4a20 55%, #4d2e0e 100%);
+  border: 3px solid #3d2008;
+  box-shadow:
+    inset -4px 0 10px rgba(0,0,0,0.35),
+    inset 2px 0 4px rgba(255,200,100,0.12),
+    4px 0 18px rgba(0,0,0,0.45);
+}
+/* door panel inset lines */
+.door-front::before {
+  content: '';
+  position: absolute;
+  inset: 12px 10px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+}
+.door-front::after {
+  content: '';
+  position: absolute;
+  top: 12px; left: 10px; right: 10px;
+  height: 49%;
+  border-bottom: 1.5px solid rgba(255,255,255,0.12);
+}
+.door-num {
+  font-size: 2.4em;
+  font-weight: 800;
+  color: rgba(255,255,255,0.45);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  z-index: 1;
+}
+.door-knob {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f8d568, #a06010);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  z-index: 2;
+}
+
+/* selected glow */
+.door-scene.selected .door-front {
+  background: linear-gradient(160deg, #d4a040 0%, #a06018 55%, #6a3a10 100%);
+  border-color: var(--gold);
+  box-shadow:
+    inset -4px 0 10px rgba(0,0,0,0.25),
+    0 0 22px rgba(248,213,104,0.45),
+    4px 0 18px rgba(0,0,0,0.35);
+}
+
+/* BACK face (prize reveal) */
+.door-back {
+  transform: rotateY(180deg);
+  background: #0b1826;
+  border: 1px solid rgba(255,255,255,0.1);
+  gap: 8px;
+}
+.door-back.car-back {
+  background: radial-gradient(ellipse at 50% 60%,
+    rgba(248,213,104,0.18) 0%, #0b1826 65%);
+}
+.prize-icon { font-size: 3.2em; line-height: 1; }
+.prize-lbl  { font-size: 0.7em; color: var(--muted); font-weight: 600; letter-spacing: 1px; }
+
+/* indicator below door */
+.door-indicator {
+  font-size: 0.75em;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+.door-indicator.win  { background: rgba(129,199,132,0.2); color: var(--green); border: 1px solid rgba(129,199,132,0.4); }
+.door-indicator.lose { background: rgba(229,115,115,0.2); color: var(--red);   border: 1px solid rgba(229,115,115,0.4); }
+.door-indicator.car  { background: rgba(248,213,104,0.15); color: var(--gold); border: 1px solid rgba(248,213,104,0.3); }
+
+/* ── Action buttons ────────────────────────────── */
+#actionArea {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  min-height: 50px;
+  align-items: center;
+}
+
+.btn {
+  padding: 11px 26px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.98em;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+.btn:active { transform: translateY(0); }
+
+.btn-stay   { background: linear-gradient(135deg, #e65100, #bf360c); color: #fff; }
+.btn-switch { background: linear-gradient(135deg, #1565c0, #0d47a1); color: #fff; }
+.btn-again  { background: linear-gradient(135deg, #2e7d32, #1b5e20); color: #fff; }
+
+/* ── Result banner ─────────────────────────────── */
+#resultBanner {
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 1.05em;
+  font-weight: 600;
+  margin-top: 14px;
+  display: none;
+}
+#resultBanner.win  { background: rgba(129,199,132,0.15); border: 1px solid rgba(129,199,132,0.4); color: #a5d6a7; display: block; }
+#resultBanner.lose { background: rgba(229,115,115,0.15); border: 1px solid rgba(229,115,115,0.4); color: #ef9a9a; display: block; }
+
+/* ── Stats sidebar ─────────────────────────────── */
+.stats-col { display: flex; flex-direction: column; gap: 18px; }
+
+.total-num   { text-align: center; font-size: 2.2em; font-weight: 800; color: var(--gold); }
+.total-sub   { text-align: center; font-size: 0.78em; color: var(--muted); margin-top: 3px; }
+
+/* strategy bars */
+.strat { margin-bottom: 18px; }
+.strat:last-child { margin-bottom: 0; }
+.strat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.strat-name  { font-weight: 700; font-size: 0.92em; }
+.strat-count { font-size: 0.8em; color: var(--muted); }
+.strat-pct   { font-size: 1.55em; font-weight: 800; }
+.bar-track   { width: 100%; height: 9px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.bar-fill    { height: 100%; border-radius: 5px; transition: width 0.5s ease; }
+.bar-switch  { background: linear-gradient(90deg, var(--blue), #90caf9); }
+.bar-stay    { background: linear-gradient(90deg, var(--orange), #ffe082); }
+.theory-note { font-size: 0.72em; color: rgba(255,255,255,0.28); margin-top: 4px; }
+
+/* auto-play */
+.auto-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.btn-auto {
+  flex: 1;
+  min-width: 55px;
+  padding: 8px 6px;
+  font-size: 0.82em;
+  font-weight: 700;
+  border: 1px solid rgba(156,39,176,0.45);
+  border-radius: 6px;
+  background: rgba(156,39,176,0.18);
+  color: #ce93d8;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-auto:hover { background: rgba(156,39,176,0.4); transform: translateY(-1px); }
+.auto-note { font-size: 0.75em; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
+.btn-reset {
+  width: 100%;
+  padding: 9px;
+  font-size: 0.82em;
+  font-weight: 700;
+  border: 1px solid rgba(229,115,115,0.35);
+  border-radius: 7px;
+  background: rgba(229,115,115,0.1);
+  color: var(--red);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-reset:hover { background: rgba(229,115,115,0.25); }
+
+/* chart */
+#chartCanvas {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.2);
+}
+
+/* theory box */
+.theory-box {
+  background: rgba(248,213,104,0.05);
+  border: 1px solid rgba(248,213,104,0.18);
+  border-radius: 9px;
+  padding: 13px 14px;
+  font-size: 0.8em;
+  color: #c4a43a;
+  line-height: 1.7;
+}
+.theory-box strong { color: var(--gold); }
+
+/* history */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.history-list::-webkit-scrollbar { width: 3px; }
+.history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.h-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 0.8em;
+  background: rgba(255,255,255,0.025);
+}
+.h-item.win  { border-left: 3px solid var(--green); }
+.h-item.lose { border-left: 3px solid var(--red); }
+.h-strat { color: var(--muted); }
+.h-result { font-weight: 700; }
+.h-item.win  .h-result { color: var(--green); }
+.h-item.lose .h-result { color: var(--red); }
+.h-empty { font-size: 0.82em; color: var(--muted); text-align: center; padding: 10px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1>三门问题</h1>
+    <p class="sub">Monty Hall Problem &nbsp;·&nbsp; Simulation Demo</p>
+  </header>
+
+  <div class="layout">
+
+    <!-- ── LEFT: Game ───────────────────────────── -->
+    <div class="card">
+      <div id="statusMsg">请点击选择一扇门，开始游戏！</div>
+
+      <div class="doors-area">
+        <!-- Door 0 -->
+        <div class="door-wrapper" id="wrap0">
+          <div class="door-lbl">第 1 号门</div>
+          <div class="door-scene pickable" id="scene0">
+            <div class="door-card" id="card0">
+              <div class="door-front" id="front0">
+                <div class="door-knob"></div>
+                <div class="door-num">1</div>
+              </div>
+              <div class="door-back" id="back0">
+                <span class="prize-icon" id="icon0"></span>
+                <span class="prize-lbl" id="lbl0"></span>
+              </div>
+            </div>
+          </div>
+          <div class="door-indicator" id="ind0" style="visibility:hidden">—</div>
+        </div>
+
+        <!-- Door 1 -->
+        <div class="door-wrapper" id="wrap1">
+          <div class="door-lbl">第 2 号门</div>
+          <div class="door-scene pickable" id="scene1">
+            <div class="door-card" id="card1">
+              <div class="door-front" id="front1">
+                <div class="door-knob"></div>
+                <div class="door-num">2</div>
+              </div>
+              <div class="door-back" id="back1">
+                <span class="prize-icon" id="icon1"></span>
+                <span class="prize-lbl" id="lbl1"></span>
+              </div>
+            </div>
+          </div>
+          <div class="door-indicator" id="ind1" style="visibility:hidden">—</div>
+        </div>
+
+        <!-- Door 2 -->
+        <div class="door-wrapper" id="wrap2">
+          <div class="door-lbl">第 3 号门</div>
+          <div class="door-scene pickable" id="scene2">
+            <div class="door-card" id="card2">
+              <div class="door-front" id="front2">
+                <div class="door-knob"></div>
+                <div class="door-num">3</div>
+              </div>
+              <div class="door-back" id="back2">
+                <span class="prize-icon" id="icon2"></span>
+                <span class="prize-lbl" id="lbl2"></span>
+              </div>
+            </div>
+          </div>
+          <div class="door-indicator" id="ind2" style="visibility:hidden">—</div>
+        </div>
+      </div>
+
+      <div id="actionArea"></div>
+      <div id="resultBanner"></div>
+    </div>
+
+    <!-- ── RIGHT: Stats ─────────────────────────── -->
+    <div class="stats-col">
+
+      <!-- total -->
+      <div class="card">
+        <h3>总游戏次数</h3>
+        <div class="total-num" id="totalNum">0</div>
+        <div class="total-sub">局</div>
+      </div>
+
+      <!-- win rates -->
+      <div class="card">
+        <h3>胜率统计</h3>
+        <div class="strat">
+          <div class="strat-row">
+            <span class="strat-name" style="color:var(--blue)">换门策略</span>
+            <span class="strat-count" id="switchCount">0 / 0</span>
+          </div>
+          <div class="strat-pct" style="color:var(--blue)" id="switchPct">—</div>
+          <div class="bar-track"><div class="bar-fill bar-switch" id="switchBar" style="width:0%"></div></div>
+          <div class="theory-note">理论值：66.67 %</div>
+        </div>
+        <div class="strat">
+          <div class="strat-row">
+            <span class="strat-name" style="color:var(--orange)">坚持策略</span>
+            <span class="strat-count" id="stayCount">0 / 0</span>
+          </div>
+          <div class="strat-pct" style="color:var(--orange)" id="stayPct">—</div>
+          <div class="bar-track"><div class="bar-fill bar-stay" id="stayBar" style="width:0%"></div></div>
+          <div class="theory-note">理论值：33.33 %</div>
+        </div>
+      </div>
+
+      <!-- auto play -->
+      <div class="card">
+        <h3>自动模拟</h3>
+        <div class="auto-btns">
+          <button class="btn-auto" onclick="autoPlay(10)">× 10</button>
+          <button class="btn-auto" onclick="autoPlay(100)">× 100</button>
+          <button class="btn-auto" onclick="autoPlay(1000)">× 1000</button>
+          <button class="btn-auto" onclick="autoPlay(10000)">× 10000</button>
+        </div>
+        <p class="auto-note">自动模拟时，换门 / 坚持策略各占 50%，<br>用于快速观察概率收敛。</p>
+        <button class="btn-reset" onclick="resetAll()">重置所有数据</button>
+      </div>
+
+      <!-- convergence chart -->
+      <div class="card">
+        <h3>概率收敛图</h3>
+        <canvas id="chartCanvas" height="158"></canvas>
+      </div>
+
+      <!-- theory -->
+      <div class="theory-box">
+        <strong>为什么换门胜率是 2/3？</strong><br>
+        初始选中汽车的概率 = 1/3<br>
+        初始选中空门的概率 = 2/3<br>
+        主持人排除一扇空门后：<br>
+        若初始选的是空门（概率 2/3），换门必赢 ✓<br>
+        若初始选的是汽车（概率 1/3），换门必输 ✗<br>
+        ∴ <strong>换门胜率 = 2/3，坚持胜率 = 1/3</strong>
+      </div>
+
+      <!-- history -->
+      <div class="card">
+        <h3>最近记录</h3>
+        <div class="history-list" id="historyList">
+          <div class="h-empty">暂无记录</div>
+        </div>
+      </div>
+
+    </div><!-- /stats-col -->
+  </div><!-- /layout -->
+</div><!-- /page -->
+
+<script>
+// ═══════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════
+const S = {
+  phase:      'pick',   // pick | revealed | result
+  carDoor:    -1,
+  pickedDoor: -1,
+  hostDoor:   -1,
+  finalDoor:  -1,
+  switched:   false,
+  won:        false,
+
+  switchWins:  0,
+  switchTotal: 0,
+  stayWins:    0,
+  stayTotal:   0,
+
+  history:   [],   // [{switched, won}] last 30, newest first
+  chartData: [],   // [{switched, won}] all time
+};
+
+// ═══════════════════════════════════════════════
+//  Game logic
+// ═══════════════════════════════════════════════
+function newGame() {
+  S.phase      = 'pick';
+  S.carDoor    = Math.floor(Math.random() * 3);
+  S.pickedDoor = -1;
+  S.hostDoor   = -1;
+  S.finalDoor  = -1;
+  S.switched   = false;
+  S.won        = false;
+  renderGame();
+}
+
+function pickDoor(i) {
+  if (S.phase !== 'pick') return;
+  S.pickedDoor = i;
+  S.phase = 'revealed';
+
+  // Host reveals an empty door that is not the player's pick
+  const opts = [0,1,2].filter(d => d !== i && d !== S.carDoor);
+  S.hostDoor = opts[Math.floor(Math.random() * opts.length)];
+
+  renderGame();
+}
+
+function decide(doSwitch) {
+  if (S.phase !== 'revealed') return;
+  S.switched   = doSwitch;
+  S.finalDoor  = doSwitch
+    ? [0,1,2].find(d => d !== S.pickedDoor && d !== S.hostDoor)
+    : S.pickedDoor;
+  S.won = (S.finalDoor === S.carDoor);
+  S.phase = 'result';
+
+  // record
+  if (doSwitch) { S.switchTotal++; if (S.won) S.switchWins++; }
+  else          { S.stayTotal++;   if (S.won) S.stayWins++;   }
+
+  S.history.unshift({ switched: doSwitch, won: S.won });
+  if (S.history.length > 30) S.history.pop();
+  S.chartData.push({ switched: doSwitch, won: S.won });
+
+  renderGame();
+  updateStats();
+  drawChart();
+}
+
+function resetAll() {
+  S.switchWins = S.switchTotal = S.stayWins = S.stayTotal = 0;
+  S.history    = [];
+  S.chartData  = [];
+  updateStats();
+  drawChart();
+  newGame();
+}
+
+// ═══════════════════════════════════════════════
+//  Auto-play
+// ═══════════════════════════════════════════════
+function autoPlay(n) {
+  for (let k = 0; k < n; k++) {
+    const car    = Math.floor(Math.random() * 3);
+    const picked = Math.floor(Math.random() * 3);
+    const opts   = [0,1,2].filter(d => d !== picked && d !== car);
+    const host   = opts[Math.floor(Math.random() * opts.length)];
+    const sw     = Math.random() < 0.5;
+    const final  = sw ? [0,1,2].find(d => d !== picked && d !== host) : picked;
+    const won    = (final === car);
+
+    if (sw) { S.switchTotal++; if (won) S.switchWins++; }
+    else    { S.stayTotal++;   if (won) S.stayWins++;   }
+
+    S.history.unshift({ switched: sw, won });
+    S.chartData.push({ switched: sw, won });
+  }
+  if (S.history.length > 30) S.history.length = 30;
+
+  updateStats();
+  drawChart();
+}
+
+// ═══════════════════════════════════════════════
+//  Render game
+// ═══════════════════════════════════════════════
+function renderGame() {
+  renderDoors();
+  renderStatus();
+  renderActions();
+  renderResult();
+}
+
+function renderDoors() {
+  for (let i = 0; i < 3; i++) {
+    const scene  = document.getElementById(`scene${i}`);
+    const back   = document.getElementById(`back${i}`);
+    const icon   = document.getElementById(`icon${i}`);
+    const lbl    = document.getElementById(`lbl${i}`);
+    const ind    = document.getElementById(`ind${i}`);
+    const hasCar = (i === S.carDoor);
+
+    // ── back face content (always true content) ──
+    if (hasCar) {
+      icon.textContent = '🚗';
+      lbl.textContent  = '汽车';
+      back.className   = 'door-back car-back';
+    } else {
+      icon.textContent = '💨';
+      lbl.textContent  = '空';
+      back.className   = 'door-back';
+    }
+
+    // ── scene classes ──
+    let cls = 'door-scene';
+
+    if (S.phase === 'pick') {
+      cls += ' pickable';
+    }
+    if (S.phase === 'revealed' && i === S.pickedDoor) {
+      cls += ' selected';
+    }
+    if (S.phase === 'revealed' && i === S.hostDoor) {
+      cls += ' host-open';
+    }
+    if (S.phase === 'result') {
+      cls += ' full-open';
+    }
+
+    scene.className = cls;
+
+    // ── indicator below door ──
+    ind.style.visibility = 'hidden';
+    ind.className = 'door-indicator';
+
+    if (S.phase === 'result') {
+      ind.style.visibility = 'visible';
+      if (i === S.finalDoor) {
+        ind.className = 'door-indicator ' + (S.won ? 'win' : 'lose');
+        ind.textContent = S.won ? '✓ 你的选择' : '✗ 你的选择';
+      } else if (i === S.carDoor && !S.won) {
+        ind.className = 'door-indicator car';
+        ind.textContent = '🚗 汽车在这里';
+      } else {
+        ind.style.visibility = 'hidden';
+      }
+    }
+  }
+}
+
+function renderStatus() {
+  const el = document.getElementById('statusMsg');
+  const msgs = {
+    pick:     '🚪 请点击选择一扇门',
+    revealed: `✅ 你选了第 ${S.pickedDoor + 1} 号门。主持人打开了第 ${S.hostDoor + 1} 号空门——是换门还是坚持？`,
+    result:   S.won
+      ? `🎉 恭喜！你${S.switched ? '换门' : '坚持原选择'}，赢得了汽车！`
+      : `😢 很遗憾，汽车在第 ${S.carDoor + 1} 号门。${S.switched ? '换门' : '坚持'}了但没赢。`,
+  };
+  el.textContent = msgs[S.phase];
+}
+
+function renderActions() {
+  const el = document.getElementById('actionArea');
+  if (S.phase === 'revealed') {
+    const sw = [0,1,2].find(d => d !== S.pickedDoor && d !== S.hostDoor);
+    el.innerHTML = `
+      <button class="btn btn-stay"   onclick="decide(false)">坚持 第 ${S.pickedDoor + 1} 号门</button>
+      <button class="btn btn-switch" onclick="decide(true)" >换到 第 ${sw + 1} 号门</button>
+    `;
+  } else if (S.phase === 'result') {
+    el.innerHTML = `<button class="btn btn-again" onclick="newGame()">再玩一次</button>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function renderResult() {
+  const el = document.getElementById('resultBanner');
+  if (S.phase === 'result') {
+    el.className = 'result-banner ' + (S.won ? 'win' : 'lose');
+    el.textContent = S.won
+      ? `🏆 赢！策略：${S.switched ? '换门' : '坚持'} | 汽车确实在第 ${S.carDoor + 1} 号门`
+      : `💨 输！策略：${S.switched ? '换门' : '坚持'} | 汽车在第 ${S.carDoor + 1} 号门`;
+  } else {
+    el.className = 'result-banner';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Stats UI
+// ═══════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('totalNum').textContent =
+    S.switchTotal + S.stayTotal;
+
+  // switch
+  const swPct = S.switchTotal > 0
+    ? (S.switchWins / S.switchTotal * 100) : null;
+  document.getElementById('switchCount').textContent =
+    `${S.switchWins} / ${S.switchTotal}`;
+  document.getElementById('switchPct').textContent =
+    swPct !== null ? swPct.toFixed(1) + ' %' : '—';
+  document.getElementById('switchBar').style.width =
+    swPct !== null ? swPct + '%' : '0%';
+
+  // stay
+  const stPct = S.stayTotal > 0
+    ? (S.stayWins / S.stayTotal * 100) : null;
+  document.getElementById('stayCount').textContent =
+    `${S.stayWins} / ${S.stayTotal}`;
+  document.getElementById('stayPct').textContent =
+    stPct !== null ? stPct.toFixed(1) + ' %' : '—';
+  document.getElementById('stayBar').style.width =
+    stPct !== null ? stPct + '%' : '0%';
+
+  // history
+  const hl = document.getElementById('historyList');
+  if (S.history.length === 0) {
+    hl.innerHTML = '<div class="h-empty">暂无记录</div>';
+  } else {
+    hl.innerHTML = S.history.map(h => `
+      <div class="h-item ${h.won ? 'win' : 'lose'}">
+        <span class="h-strat">${h.switched ? '换门' : '坚持'}</span>
+        <span class="h-result">${h.won ? '✓ 赢' : '✗ 输'}</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Convergence chart
+// ═══════════════════════════════════════════════
+function drawChart() {
+  const canvas = document.getElementById('chartCanvas');
+  const W = canvas.offsetWidth || 266;
+  canvas.width  = W;
+  canvas.height = 158;
+  const H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const PAD = { top: 10, right: 8, bottom: 22, left: 36 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let t = 0; t <= 4; t++) {
+    const y = PAD.top + plotH * (1 - t / 4);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+  }
+
+  // y-axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  ['0', '25', '50', '75', '100'].forEach((lbl, i) => {
+    const y = PAD.top + plotH * (1 - i / 4) + 4;
+    ctx.fillText(lbl + '%', PAD.left - 4, y);
+  });
+
+  const data = S.chartData;
+
+  if (data.length < 2) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('至少需要 2 局数据', PAD.left + plotW / 2, PAD.top + plotH / 2 + 4);
+    return;
+  }
+
+  // theory lines (dashed)
+  const theorySw = PAD.top + plotH * (1 - 2/3);
+  const theorySt = PAD.top + plotH * (1 - 1/3);
+  ctx.setLineDash([5, 5]);
+  ctx.lineWidth = 1;
+
+  ctx.strokeStyle = 'rgba(100,181,246,0.28)';
+  ctx.beginPath(); ctx.moveTo(PAD.left, theorySw); ctx.lineTo(W - PAD.right, theorySw); ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,183,77,0.28)';
+  ctx.beginPath(); ctx.moveTo(PAD.left, theorySt); ctx.lineTo(W - PAD.right, theorySt); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Downsample if too many points (keep performance smooth)
+  const MAX_POINTS = 400;
+  let pts = data;
+  if (data.length > MAX_POINTS) {
+    const step = Math.ceil(data.length / MAX_POINTS);
+    pts = data.filter((_, i) => i % step === 0 || i === data.length - 1);
+  }
+
+  // Accumulate running rates
+  let swW = 0, swT = 0, stW = 0, stT = 0;
+  const swPts = [], stPts = [];
+  const srcLen = data.length;
+
+  // Walk through original data to get accurate running totals at sampled indices
+  let sIdx = 0;
+  for (let i = 0; i < data.length; i++) {
+    const d = data[i];
+    if (d.switched) { swT++; if (d.won) swW++; }
+    else            { stT++; if (d.won) stW++; }
+
+    const isLast = (i === data.length - 1);
+    if (sIdx < pts.length && pts[sIdx] === d) {
+      const x = PAD.left + (i / (srcLen - 1)) * plotW;
+      if (swT > 0) swPts.push({ x, y: swW / swT });
+      if (stT > 0) stPts.push({ x, y: stW / stT });
+      sIdx++;
+    }
+  }
+
+  function drawLine(pts, color) {
+    if (pts.length < 2) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.8;
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const py = PAD.top + plotH * (1 - p.y);
+      i === 0 ? ctx.moveTo(p.x, py) : ctx.lineTo(p.x, py);
+    });
+    ctx.stroke();
+  }
+
+  drawLine(swPts, 'rgba(100,181,246,0.9)');
+  drawLine(stPts, 'rgba(255,183,77,0.9)');
+
+  // x-axis label
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '9.5px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`n = ${data.length}`, PAD.left + plotW / 2, H - 4);
+
+  // legend
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(100,181,246,0.85)';
+  ctx.fillRect(W - 90, PAD.top + 2, 14, 2);
+  ctx.fillText('换门', W - 72, PAD.top + 7);
+
+  ctx.fillStyle = 'rgba(255,183,77,0.85)';
+  ctx.fillRect(W - 90, PAD.top + 14, 14, 2);
+  ctx.fillText('坚持', W - 72, PAD.top + 19);
+}
+
+// ═══════════════════════════════════════════════
+//  Door click delegation
+// ═══════════════════════════════════════════════
+for (let i = 0; i < 3; i++) {
+  document.getElementById(`scene${i}`).addEventListener('click', () => {
+    if (S.phase === 'pick') pickDoor(i);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  Boot
+// ═══════════════════════════════════════════════
+window.addEventListener('resize', drawChart);
+newGame();
+updateStats();
+drawChart();
+</script>
+</body>
+</html>
