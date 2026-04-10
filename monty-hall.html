@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>三门问题 · Monty Hall Problem</title>
+<title>Monty Hall Problem · Three Doors</title>
 <style>
 :root {
   --gold:        #f8d568;
@@ -383,7 +383,7 @@ header .sub {
 <div class="page">
 
   <header>
-    <h1>三门问题</h1>
+    <h1>Monty Hall Problem</h1>
     <p class="sub">Monty Hall Problem &nbsp;·&nbsp; Simulation Demo</p>
   </header>
 
@@ -391,12 +391,12 @@ header .sub {
 
     <!-- ── LEFT: Game ───────────────────────────── -->
     <div class="card">
-      <div id="statusMsg">请点击选择一扇门，开始游戏！</div>
+      <div id="statusMsg">Click a door to start the game!</div>
 
       <div class="doors-area">
         <!-- Door 0 -->
         <div class="door-wrapper" id="wrap0">
-          <div class="door-lbl">第 1 号门</div>
+          <div class="door-lbl">Door 1</div>
           <div class="door-scene pickable" id="scene0">
             <div class="door-card" id="card0">
               <div class="door-front" id="front0">
@@ -414,7 +414,7 @@ header .sub {
 
         <!-- Door 1 -->
         <div class="door-wrapper" id="wrap1">
-          <div class="door-lbl">第 2 号门</div>
+          <div class="door-lbl">Door 2</div>
           <div class="door-scene pickable" id="scene1">
             <div class="door-card" id="card1">
               <div class="door-front" id="front1">
@@ -432,7 +432,7 @@ header .sub {
 
         <!-- Door 2 -->
         <div class="door-wrapper" id="wrap2">
-          <div class="door-lbl">第 3 号门</div>
+          <div class="door-lbl">Door 3</div>
           <div class="door-scene pickable" id="scene2">
             <div class="door-card" id="card2">
               <div class="door-front" id="front2">
@@ -458,69 +458,69 @@ header .sub {
 
       <!-- total -->
       <div class="card">
-        <h3>总游戏次数</h3>
+        <h3>Total Games</h3>
         <div class="total-num" id="totalNum">0</div>
-        <div class="total-sub">局</div>
+        <div class="total-sub">games</div>
       </div>
 
       <!-- win rates -->
       <div class="card">
-        <h3>胜率统计</h3>
+        <h3>Win Rate</h3>
         <div class="strat">
           <div class="strat-row">
-            <span class="strat-name" style="color:var(--blue)">换门策略</span>
+            <span class="strat-name" style="color:var(--blue)">Switch Strategy</span>
             <span class="strat-count" id="switchCount">0 / 0</span>
           </div>
           <div class="strat-pct" style="color:var(--blue)" id="switchPct">—</div>
           <div class="bar-track"><div class="bar-fill bar-switch" id="switchBar" style="width:0%"></div></div>
-          <div class="theory-note">理论值：66.67 %</div>
+          <div class="theory-note">Theory: 66.67 %</div>
         </div>
         <div class="strat">
           <div class="strat-row">
-            <span class="strat-name" style="color:var(--orange)">坚持策略</span>
+            <span class="strat-name" style="color:var(--orange)">Stay Strategy</span>
             <span class="strat-count" id="stayCount">0 / 0</span>
           </div>
           <div class="strat-pct" style="color:var(--orange)" id="stayPct">—</div>
           <div class="bar-track"><div class="bar-fill bar-stay" id="stayBar" style="width:0%"></div></div>
-          <div class="theory-note">理论值：33.33 %</div>
+          <div class="theory-note">Theory: 33.33 %</div>
         </div>
       </div>
 
       <!-- auto play -->
       <div class="card">
-        <h3>自动模拟</h3>
+        <h3>Auto Simulation</h3>
         <div class="auto-btns">
           <button class="btn-auto" onclick="autoPlay(10)">× 10</button>
           <button class="btn-auto" onclick="autoPlay(100)">× 100</button>
           <button class="btn-auto" onclick="autoPlay(1000)">× 1000</button>
           <button class="btn-auto" onclick="autoPlay(10000)">× 10000</button>
         </div>
-        <p class="auto-note">自动模拟时，换门 / 坚持策略各占 50%，<br>用于快速观察概率收敛。</p>
-        <button class="btn-reset" onclick="resetAll()">重置所有数据</button>
+        <p class="auto-note">In auto mode, switch / stay are 50/50,<br>for fast observation of probability convergence.</p>
+        <button class="btn-reset" onclick="resetAll()">Reset All Data</button>
       </div>
 
       <!-- convergence chart -->
       <div class="card">
-        <h3>概率收敛图</h3>
+        <h3>Probability Convergence</h3>
         <canvas id="chartCanvas" height="158"></canvas>
       </div>
 
       <!-- theory -->
       <div class="theory-box">
-        <strong>为什么换门胜率是 2/3？</strong><br>
-        初始选中汽车的概率 = 1/3<br>
-        初始选中空门的概率 = 2/3<br>
-        主持人排除一扇空门后：<br>
-        若初始选的是空门（概率 2/3），换门必赢 ✓<br>
-        若初始选的是汽车（概率 1/3），换门必输 ✗<br>
-        ∴ <strong>换门胜率 = 2/3，坚持胜率 = 1/3</strong>
+        <strong>Why does switching win 2/3 of the time?</strong><br>
+        Initial probability of picking the car = 1/3<br>
+        Initial probability of picking an empty door = 2/3<br>
+        After the host reveals an empty door:<br>
+        If you initially picked empty (prob. 2/3), switching wins ✓<br>
+        If you initially picked the car (prob. 1/3), switching loses ✗<br>
+        ∴ <strong>Switch win rate = 2/3, Stay win rate = 1/3</strong>
       </div>
 
       <!-- history -->
       <div class="card">
-        <h3>最近记录</h3>
+        <h3>Recent History</h3>
         <div class="history-list" id="historyList">
-          <div class="h-empty">暂无记录</div>
+          <div class="h-empty">No records yet</div>
         </div>
       </div>
 
@@ -654,11 +654,11 @@ function renderDoors() {
     // ── back face content (always true content) ──
     if (hasCar) {
       icon.textContent = '🚗';
-      lbl.textContent  = '汽车';
+      lbl.textContent  = 'Car';
       back.className   = 'door-back car-back';
     } else {
       icon.textContent = '💨';
-      lbl.textContent  = '空';
+      lbl.textContent  = 'Empty';
       back.className   = 'door-back';
     }
 
@@ -688,10 +688,10 @@ function renderDoors() {
       ind.style.visibility = 'visible';
       if (i === S.finalDoor) {
         ind.className = 'door-indicator ' + (S.won ? 'win' : 'lose');
-        ind.textContent = S.won ? '✓ 你的选择' : '✗ 你的选择';
+        ind.textContent = S.won ? '✓ Your pick' : '✗ Your pick';
       } else if (i === S.carDoor && !S.won) {
         ind.className = 'door-indicator car';
-        ind.textContent = '🚗 汽车在这里';
+        ind.textContent = '🚗 Car here';
       } else {
         ind.style.visibility = 'hidden';
       }
@@ -702,11 +702,11 @@ function renderDoors() {
 function renderStatus() {
   const el = document.getElementById('statusMsg');
   const msgs = {
-    pick:     '🚪 请点击选择一扇门',
-    revealed: `✅ 你选了第 ${S.pickedDoor + 1} 号门。主持人打开了第 ${S.hostDoor + 1} 号空门——是换门还是坚持？`,
+    pick:     '🚪 Click a door to choose',
+    revealed: `✅ You chose Door ${S.pickedDoor + 1}. The host revealed Door ${S.hostDoor + 1} (empty) — switch or stay?`,
     result:   S.won
-      ? `🎉 恭喜！你${S.switched ? '换门' : '坚持原选择'}，赢得了汽车！`
-      : `😢 很遗憾，汽车在第 ${S.carDoor + 1} 号门。${S.switched ? '换门' : '坚持'}了但没赢。`,
+      ? `🎉 Congratulations! You ${S.switched ? 'switched' : 'stayed'} and won the car!`
+      : `😢 Sorry, the car was behind Door ${S.carDoor + 1}. You ${S.switched ? 'switched' : 'stayed'} but lost.`,
   };
   el.textContent = msgs[S.phase];
 }
@@ -716,11 +716,11 @@ function renderActions() {
   if (S.phase === 'revealed') {
     const sw = [0,1,2].find(d => d !== S.pickedDoor && d !== S.hostDoor);
     el.innerHTML = `
-      <button class="btn btn-stay"   onclick="decide(false)">坚持 第 ${S.pickedDoor + 1} 号门</button>
-      <button class="btn btn-switch" onclick="decide(true)" >换到 第 ${sw + 1} 号门</button>
+      <button class="btn btn-stay"   onclick="decide(false)">Stay with Door ${S.pickedDoor + 1}</button>
+      <button class="btn btn-switch" onclick="decide(true)" >Switch to Door ${sw + 1}</button>
     `;
   } else if (S.phase === 'result') {
-    el.innerHTML = `<button class="btn btn-again" onclick="newGame()">再玩一次</button>`;
+    el.innerHTML = `<button class="btn btn-again" onclick="newGame()">Play Again</button>`;
   } else {
     el.innerHTML = '';
   }
@@ -731,8 +731,8 @@ function renderResult() {
   if (S.phase === 'result') {
     el.className = 'result-banner ' + (S.won ? 'win' : 'lose');
     el.textContent = S.won
-      ? `🏆 赢！策略：${S.switched ? '换门' : '坚持'} | 汽车确实在第 ${S.carDoor + 1} 号门`
-      : `💨 输！策略：${S.switched ? '换门' : '坚持'} | 汽车在第 ${S.carDoor + 1} 号门`;
+      ? `🏆 Win! Strategy: ${S.switched ? 'Switch' : 'Stay'} | Car was behind Door ${S.carDoor + 1}`
+      : `💨 Loss! Strategy: ${S.switched ? 'Switch' : 'Stay'} | Car was behind Door ${S.carDoor + 1}`;
   } else {
     el.className = 'result-banner';
   }
@@ -768,12 +768,12 @@ function updateStats() {
   // history
   const hl = document.getElementById('historyList');
   if (S.history.length === 0) {
-    hl.innerHTML = '<div class="h-empty">暂无记录</div>';
+    hl.innerHTML = '<div class="h-empty">No records yet</div>';
   } else {
     hl.innerHTML = S.history.map(h => `
       <div class="h-item ${h.won ? 'win' : 'lose'}">
-        <span class="h-strat">${h.switched ? '换门' : '坚持'}</span>
-        <span class="h-result">${h.won ? '✓ 赢' : '✗ 输'}</span>
+        <span class="h-strat">${h.switched ? 'Switch' : 'Stay'}</span>
+        <span class="h-result">${h.won ? '✓ Win' : '✗ Loss'}</span>
       </div>
     `).join('');
   }
@@ -818,7 +818,7 @@ function drawChart() {
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('至少需要 2 局数据', PAD.left + plotW / 2, PAD.top + plotH / 2 + 4);
+    ctx.fillText('Need at least 2 games', PAD.left + plotW / 2, PAD.top + plotH / 2 + 4);
     return;
   }
 
@@ -890,11 +890,11 @@ function drawChart() {
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgba(100,181,246,0.85)';
   ctx.fillRect(W - 90, PAD.top + 2, 14, 2);
-  ctx.fillText('换门', W - 72, PAD.top + 7);
+  ctx.fillText('Switch', W - 72, PAD.top + 7);
 
   ctx.fillStyle = 'rgba(255,183,77,0.85)';
   ctx.fillRect(W - 90, PAD.top + 14, 14, 2);
-  ctx.fillText('坚持', W - 72, PAD.top + 19);
+  ctx.fillText('Stay', W - 72, PAD.top + 19);
 }
 
 // ═══════════════════════════════════════════════
