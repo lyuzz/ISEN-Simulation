@@ -414,9 +414,40 @@ header .sub {
 #wsStatus  { font-weight: 600; transition: color 0.3s; }
 #myNameTag { color: var(--gold); font-weight: 700; }
 
+/* ── Online players in header ────────────────── */
+.online-names {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  min-height: 22px;
+}
+.online-pill {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.78em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.online-pill.me {
+  background: rgba(248,213,104,0.14);
+  border-color: rgba(248,213,104,0.4);
+  color: var(--gold);
+}
+
+/* ── Game column (game card + leaderboard stacked) */
+.game-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* ── Leaderboard ─────────────────────────────── */
 .lb-section {
-  margin-top: 24px;
+  /* margin handled by game-col gap */
 }
 .lb-header {
   display: flex;
@@ -489,6 +520,7 @@ header .sub {
   <header>
     <h1>Monty Hall Problem</h1>
     <p class="sub">Monty Hall Problem &nbsp;·&nbsp; Simulation Demo</p>
+    <div class="online-names" id="onlineNames"></div>
     <div class="header-meta">
       <span id="wsStatus" style="color:var(--muted)">● Connecting…</span>
       <span id="myNameTag"></span>
@@ -497,7 +529,8 @@ header .sub {
 
   <div class="layout">
 
-    <!-- ── LEFT: Game ───────────────────────────── -->
+    <!-- ── LEFT: Game + Leaderboard ─────────────── -->
+    <div class="game-col">
     <div class="card">
       <div id="statusMsg">Click a door to start the game!</div>
 
@@ -560,6 +593,19 @@ header .sub {
       <div id="actionArea"></div>
       <div id="resultBanner"></div>
     </div>
+
+    <!-- ── LIVE LEADERBOARD (below game area) ──── -->
+    <div class="card lb-section">
+      <div class="lb-header">
+        <h3>Live Leaderboard</h3>
+        <span id="onlineCount">0 online</span>
+      </div>
+      <div class="lb-list" id="lbList">
+        <div class="lb-empty">Connecting…</div>
+      </div>
+    </div>
+
+    </div><!-- /game-col -->
 
     <!-- ── RIGHT: Stats ─────────────────────────── -->
     <div class="stats-col">
@@ -635,16 +681,6 @@ header .sub {
     </div><!-- /stats-col -->
   </div><!-- /layout -->
 
-  <!-- ── LIVE LEADERBOARD (full width below game) ── -->
-  <div class="card lb-section">
-    <div class="lb-header">
-      <h3>Live Leaderboard</h3>
-      <span id="onlineCount">0 online</span>
-    </div>
-    <div class="lb-list" id="lbList">
-      <div class="lb-empty">Connecting…</div>
-    </div>
-  </div>
 </div><!-- /page -->
 
 <!-- Join modal -->
@@ -1108,6 +1144,19 @@ function renderLeaderboard(players) {
   const count = document.getElementById('onlineCount');
   const list  = document.getElementById('lbList');
   count.textContent = `${players.length} online`;
+
+  // Update online names in header
+  const namesEl = document.getElementById('onlineNames');
+  if (namesEl) {
+    if (players.length === 0) {
+      namesEl.innerHTML = '';
+    } else {
+      namesEl.innerHTML = players.map(p => {
+        const isMe = p.id === myPlayerId;
+        return `<span class="online-pill${isMe ? ' me' : ''}">${escHtml(p.name)}</span>`;
+      }).join('');
+    }
+  }
 
   if (players.length === 0) {
     list.innerHTML = '<div class="lb-empty">No players connected</div>';
